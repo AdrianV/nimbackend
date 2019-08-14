@@ -324,7 +324,12 @@ proc `&`* [T] (a, b: DynamicArray[T]): DynamicArray[T] =
   elif not isNil(b) :
     incRef(b)
     result.data = b.data
-    
+
+proc setLen* (dest: var AnsiString, newLen: Natural) =
+  uniqueStringOfLen(dest, newLen)
+
+proc setLen* [T](dest: var DynamicArray[T], newLen: Natural) =
+  uniqueArrayOfLen(dest, newLen)
 
 proc add* [T] (dest: var DynamicArray[T], b: DynamicArray[T]) =
   if not isNil(dest) :

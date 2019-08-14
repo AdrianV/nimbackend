@@ -17,10 +17,11 @@ function someResult(const s: AnsiString): AnsiString; external backend_dll;
 function someArray(n: Integer): TDynIntArray; external backend_dll;
 function someStringArray(n: Integer): TDynStringArray; external backend_dll;
 function testStringList(a: TDynStringArray): TStringList; external backend_dll;
+procedure cleanString(var a: AnsiString); external backend_dll;
 
 procedure test;
 var
-  s: string;
+  s, s2: string;
   ar: TDynIntArray;
   ar2: TDynStringArray;
   i: Integer;
@@ -38,6 +39,14 @@ begin
   lst:= testStringList(ar2);
   writeln(lst.Text);
   lst.Free;
+  s2:= s;
+  cleanString(s);
+  writeln('s: ', s);
+  writeln('s2: ', s2);
+  cleanString(s2);
+  cleanString(s);
+  writeln('s: ', s);
+  writeln('s2: ', s2);
 end;
 
 begin
