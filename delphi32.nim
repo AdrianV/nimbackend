@@ -331,12 +331,22 @@ proc setLen* (dest: var AnsiString, newLen: Natural) =
 proc setLen* [T](dest: var DynamicArray[T], newLen: Natural) =
   uniqueArrayOfLen(dest, newLen)
 
-proc add* [T] (dest: var DynamicArray[T], b: DynamicArray[T]) =
+proc add* (dest: var AnsiString, b: AnsiString) =
   if not isNil(dest) :
     if not isNil(b) :
       let lena = dest.len 
       uniqueStringOfLen(dest, lena + b.len)
-      for i in 0 ..< b.len : dest[lena + i] = b[i]
+      for i in 0 ..< b.len : dest.data[lena + i] = b.data[i]
+  elif not isNil(b) :
+    incRef(b)
+    dest.data = b.data
+
+proc add* [T] (dest: var DynamicArray[T], b: DynamicArray[T]) =
+  if not isNil(dest) :
+    if not isNil(b) :
+      let lena = dest.len 
+      uniqueArrayOfLen(dest, lena + b.len)
+      for i in 0 ..< b.len : dest.data[lena + i] = b[i]
   elif not isNil(b) :
     incRef(b)
     dest.data = b.data
@@ -345,11 +355,13 @@ proc add* [T] (dest: var DynamicArray[T], v: T) =
   if not isNil(dest) :
     let la = dest.len
     uniqueArrayOfLen(dest, la + 1)
-    dest[la] = v
+    dest.data[la] = v
   else :
     dest.data = newDynamicArray[T](1)
-    dest[0] = v
+    dest.data[0] = v
     
+template `&=`* (dest: var AnsiString, b: AnsiString) =
+  add(dest, b)
 
 template `&=`* [T] (dest: var DynamicArray[T], b: DynamicArray[T]) =
   add(dest, b)
