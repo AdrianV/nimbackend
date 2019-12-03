@@ -7,6 +7,7 @@ elif false and defined(gcc) and defined(registerCalling):
   {.pragma: expDelphi, exportc: "__attribute__((regparm(3))) $1", dynlib.}
 else:
   {.pragma: expDelphi, fastcall, exportc: "$1", dynlib.}
+  {.pragma: expDelphiCdecl, cdecl, exportc: "$1", dynlib.}
 
 
 {.emit: """/*TYPESECTION*/

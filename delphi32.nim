@@ -12,7 +12,7 @@ type
     refCnt*: int32
     length*: int32
   StrRecPtr* = ptr StrRec
-  AnsiStringData* = ptr UncheckedArray[char]
+  AnsiStringData = ptr UncheckedArray[char]
   AnsiString* {.pure, final, bycopy.} = object
     data: AnsiStringData
   WeakPartialString* {.pure, final.} = object
@@ -45,6 +45,10 @@ proc newAnsiString(length: int32): AnsiStringData =
     p.length = length
     p.refCnt = 1
     cast[ptr int16](cast[ByteAddress](result) + (length and not 1))[] = 0'i16  # length guaranteed >= 2
+
+template raw* (s: AnsiString): pointer = cast[pointer](s.data)
+
+template raw* [T](a: DynamicArray[T]): pointer = cast[pointer](a.data)
 
 template rec* (s: AnsiStringData): StrRecPtr = 
   cast[StrRecPtr](cast[ByteAddress](s) - sizeof(StrRec))
@@ -121,7 +125,7 @@ proc toString* (s: AnsiString): string =
   # echo length
   if length > 0 :
     result = newString(length)
-    moveMem(addr result[0], s.data, length)
+    copyMem(addr result[0], s.data, length)
   else : result = ""  
 
 template `$`* (s: AnsiString): string = toString(s)
@@ -170,14 +174,14 @@ proc `=sink`* [T] (a: var DynamicArray[T], b: DynamicArray[T]) =
   a.data = b.data
   
 proc `=`* (dest: var AnsiString, source: AnsiString) = 
-  echo "assign: ", source, " to is empty: ", dest.isNil
+  # echo "assign: ", source, " to is empty: ", dest.isNil
   var s = source.data
   if not isNil(source) :
     var p = source.rec
     if p[].refCnt < 0 : # string literal
       let length = p.length
       s = newAnsiString(length)
-      moveMem(s, source.data, length)
+      copyMem(s, source.data, length)
       p = s.rec
     discard atomicInc(p[].refCnt)
   var d = dest.data
@@ -193,7 +197,7 @@ proc `=`* [T](dest: var DynamicArray[T], source: DynamicArray[T]) =
     if p[].refCnt < 0 : # string literal
       let length = p.length
       s = newDynamicArray[T](length)
-      moveMem(s, source.data, length)
+      copyMem(s, source.data, length)
       p = s.rec
     discard atomicInc(p[].refCnt)
   var d = dest.data
@@ -221,7 +225,7 @@ proc uniqueStringImpl(s: var AnsiString, rec: StrRecPtr) =
   # s != nil and s.refCount > 1
   let wantedLen = rec.length
   s.data = newAnsiString(wantedLen)
-  moveMem(s.data, rec.data, wantedLen)
+  copyMem(s.data, rec.data, wantedLen)
   discard atomicDec(rec.refCnt)
   
 template uniqueString* (s: var AnsiString) =
@@ -275,14 +279,14 @@ proc toAnsiString* (s: cstring): AnsiString =
   let length = s.len.int32
   if length > 0 :
     result.data = newAnsiString(length)
-    moveMem(result.data, s, length)
+    copyMem(result.data, s, length)
 
 proc toAnsiString* (s: string): AnsiString =
   echo "from string: ", s
   let length = s.len.int32
   if length > 0 :
     result.data = newAnsiString(length)
-    moveMem(result.data, unsafeAddr s[0], length)
+    copyMem(result.data, unsafeAddr s[0], length)
 
 template ds* (s: static[string|cstring]):AnsiString =
   toAnsiString(s)
@@ -295,8 +299,8 @@ proc concat (a, b: AnsiString): AnsiStringData =
   let la = a.rec.length
   let lb = b.rec.length
   result = newAnsiString(la+lb)
-  moveMem(result, a.data, la)
-  moveMem(addr result[la], b.data, lb)
+  copyMem(result, a.data, la)
+  copyMem(addr result[la], b.data, lb)
 
 proc concat [T] (a, b: DynamicArray[T]): DynamicArrayData[T] =
   let la = a.rec.length
