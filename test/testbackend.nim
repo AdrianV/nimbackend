@@ -14,7 +14,7 @@ proc someArray(n: int32; result: var DynamicArray[int32]) {.expDelphi.} =
   
 proc someStringArray(n: int32; result: var DynamicArray[AnsiString]) {.expDelphi.} =
   result.setLen(n)
-  for i in 1 .. n : result[i - 1] = ds"Zahl: " & ds $i
+  for i in 1 .. n : result[i - 1] = ds"number: " & ds $i
 
 proc testStringList(a: DynamicArray[AnsiString]): TStringList {.expDelphi.} =
   echo "a has refCount: ", a.refCount
